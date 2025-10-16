@@ -1,0 +1,122 @@
+name: Setup PostgreSQL on Server
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  setup-postgresql:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.IP }} >> ~/.ssh/known_hosts
+
+      - name: Check if PostgreSQL is already running
+        id: check_postgres
+        run: |
+          if ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} \
+            "docker ps --filter 'name=postgresql' --filter 'status=running' --format '{{.Names}}' | grep -q postgresql"; then
+            echo "postgres_running=true" >> $GITHUB_OUTPUT
+            echo "PostgreSQL container is already running"
+          else
+            echo "postgres_running=false" >> $GITHUB_OUTPUT
+            echo "PostgreSQL container is not running"
+          fi
+
+      - name: Exit if PostgreSQL is already running
+        if: steps.check_postgres.outputs.postgres_running == 'true'
+        run: |
+          echo "✅ PostgreSQL is already installed and running on the server"
+          exit 0
+
+      - name: Install Docker on server
+        if: steps.check_postgres.outputs.postgres_running == 'false'
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} << 'EOF'
+            # Check if Docker is already installed
+            if ! command -v docker &> /dev/null; then
+              echo "Installing Docker..."
+              
+              # Update package index
+              sudo apt-get update
+              
+              # Install prerequisites
+              sudo apt-get install -y ca-certificates curl
+              
+              # Add Docker's official GPG key
+              sudo install -m 0755 -d /etc/apt/keyrings
+              sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+              sudo chmod a+r /etc/apt/keyrings/docker.asc
+              
+              # Add Docker repository
+              echo \
+                "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+                $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+                sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+              
+              # Install Docker
+              sudo apt-get update
+              sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+              
+              # Add user to docker group
+              sudo usermod -aG docker $USER
+              
+              echo "Docker installed successfully"
+            else
+              echo "Docker is already installed"
+            fi
+          EOF
+
+      - name: Setup PostgreSQL 18 container
+        if: steps.check_postgres.outputs.postgres_running == 'false'
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} << 'EOF'
+            # Create directory for PostgreSQL data
+            mkdir -p ~/postgresql/data
+            
+            # Pull PostgreSQL 18 image
+            docker pull postgres:18
+            
+            # Run PostgreSQL container
+            docker run -d \
+              --name postgresql \
+              --restart unless-stopped \
+              -e POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
+              -e POSTGRES_USER=${{ secrets.POSTGRES_USER }} \
+              -e POSTGRES_DB=${{ secrets.POSTGRES_DB }} \
+              -p ${{ secrets.POSTGRES_PORT }}:5432 \
+              -v ~/postgresql/data:/var/lib/postgresql/data \
+              postgres:18
+            
+            # Wait for PostgreSQL to be ready
+            echo "Waiting for PostgreSQL to be ready..."
+            sleep 10
+            
+            # Verify PostgreSQL is running
+            docker ps --filter "name=postgresql"
+            
+            echo "✅ PostgreSQL 18 has been successfully installed and started"
+          EOF
+
+      - name: Verify installation
+        if: steps.check_postgres.outputs.postgres_running == 'false'
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} \
+            "docker exec postgresql psql -U ${{ secrets.POSTGRES_USER }} -c 'SELECT version();'"
+
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

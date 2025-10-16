@@ -28,12 +28,12 @@ jobs:
         id: check_postgres
         run: |
           if ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} \
-            "docker ps --filter 'name=postgresql' --filter 'status=running' --format '{{.Names}}' | grep -q postgresql"; then
+            "command -v docker &> /dev/null && docker ps --filter 'name=postgresql' --filter 'status=running' --format '{{.Names}}' | grep -q postgresql"; then
             echo "postgres_running=true" >> $GITHUB_OUTPUT
             echo "PostgreSQL container is already running"
           else
             echo "postgres_running=false" >> $GITHUB_OUTPUT
-            echo "PostgreSQL container is not running"
+            echo "PostgreSQL container is not running or Docker is not installed"
           fi
 
       - name: Exit if PostgreSQL is already running
@@ -45,34 +45,36 @@ jobs:
       - name: Install Docker on server
         if: steps.check_postgres.outputs.postgres_running == 'false'
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} << 'EOF'
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} bash -s << EOF
+            export PASSWORD='${{ secrets.PASSWORD }}'
+            
             # Check if Docker is already installed
             if ! command -v docker &> /dev/null; then
               echo "Installing Docker..."
               
               # Update package index
-              sudo apt-get update
+              echo "\$PASSWORD" | sudo -S apt-get update
               
               # Install prerequisites
-              sudo apt-get install -y ca-certificates curl
+              echo "\$PASSWORD" | sudo -S apt-get install -y ca-certificates curl
               
               # Add Docker's official GPG key
-              sudo install -m 0755 -d /etc/apt/keyrings
-              sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-              sudo chmod a+r /etc/apt/keyrings/docker.asc
+              echo "\$PASSWORD" | sudo -S install -m 0755 -d /etc/apt/keyrings
+              echo "\$PASSWORD" | sudo -S curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+              echo "\$PASSWORD" | sudo -S chmod a+r /etc/apt/keyrings/docker.asc
               
               # Add Docker repository
               echo \
-                "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
-                $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-                sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+                "deb [arch=\$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+                \$(. /etc/os-release && echo "\$VERSION_CODENAME") stable" | \
+                echo "\$PASSWORD" | sudo -S tee /etc/apt/sources.list.d/docker.list > /dev/null
               
               # Install Docker
-              sudo apt-get update
-              sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+              echo "\$PASSWORD" | sudo -S apt-get update
+              echo "\$PASSWORD" | sudo -S apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
               
               # Add user to docker group
-              sudo usermod -aG docker $USER
+              echo "\$PASSWORD" | sudo -S usermod -aG docker \$USER
               
               echo "Docker installed successfully"
             else
@@ -83,7 +85,7 @@ jobs:
       - name: Setup PostgreSQL 18 container
         if: steps.check_postgres.outputs.postgres_running == 'false'
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} << 'EOF'
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} bash -s << EOF
             # Create directory for PostgreSQL data
             mkdir -p ~/postgresql/data
             
@@ -94,9 +96,9 @@ jobs:
             docker run -d \
               --name postgresql \
               --restart unless-stopped \
-              -e POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
-              -e POSTGRES_USER=${{ secrets.POSTGRES_USER }} \
-              -e POSTGRES_DB=${{ secrets.POSTGRES_DB }} \
+              -e POSTGRES_PASSWORD='${{ secrets.POSTGRES_PASSWORD }}' \
+              -e POSTGRES_USER='${{ secrets.POSTGRES_USER }}' \
+              -e POSTGRES_DB='${{ secrets.POSTGRES_DB }}' \
               -p ${{ secrets.POSTGRES_PORT }}:5432 \
               -v ~/postgresql/data:/var/lib/postgresql/data \
               postgres:18

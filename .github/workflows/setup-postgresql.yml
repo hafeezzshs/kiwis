@@ -27,8 +27,13 @@ jobs:
       - name: Check if PostgreSQL is already running
         id: check_postgres
         run: |
-          if ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} \
-            "command -v docker &> /dev/null && docker ps --filter 'name=postgresql' --filter 'status=running' --format '{{.Names}}' | grep -q postgresql"; then
+          set +e
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} \
+            'command -v docker >/dev/null 2>&1 && docker ps --filter "name=postgresql" --filter "status=running" --format "{{.Names}}" | grep -q "^postgresql$"'
+          EXIT_CODE=$?
+          set -e
+
+          if [ $EXIT_CODE -eq 0 ]; then
             echo "postgres_running=true" >> $GITHUB_OUTPUT
             echo "PostgreSQL container is already running"
           else

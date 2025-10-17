@@ -90,6 +90,7 @@ jobs:
 
             # ✅ Correct repo write: no pipelines → no $PASSWORD leak
             echo "$PASSWORD" | sudo -S bash -c "echo deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo \$VERSION_CODENAME) stable > /etc/apt/sources.list.d/docker.list"
+            echo "$PASSWORD" | sudo -S bash -c ". /etc/os-release && echo deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \$VERSION_CODENAME stable > /etc/apt/sources.list.d/docker.list"
 
             run_sudo apt-get update
             run_sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin

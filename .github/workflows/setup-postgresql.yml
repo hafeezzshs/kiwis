@@ -81,8 +81,8 @@ jobs:
 
           if ! command -v docker >/dev/null 2>&1; then
             echo "🔧 Installing Docker..."
-            run_sudo apt-get update
-            run_sudo apt-get install -y ca-certificates curl
+            run_sudo DEBIAN_FRONTEND=noninteractive apt-get -yq update
+            run_sudo DEBIAN_FRONTEND=noninteractive apt-get -yq install -y ca-certificates curl
 
             run_sudo install -m 0755 -d /etc/apt/keyrings
             run_sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
@@ -91,8 +91,8 @@ jobs:
             # ✅ Correct repo write: no pipelines → no $PASSWORD leak
             echo "$PASSWORD" | sudo -SE bash -c ". /etc/os-release && echo deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \$VERSION_CODENAME stable > /etc/apt/sources.list.d/docker.list"
 
-            run_sudo apt-get update
-            run_sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+            run_sudo DEBIAN_FRONTEND=noninteractive apt-get -yq update
+            run_sudo DEBIAN_FRONTEND=noninteractive apt-get -yq install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
             # Ensure docker group exists and add user
             run_sudo groupadd -f docker

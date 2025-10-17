@@ -175,7 +175,7 @@ jobs:
               -e POSTGRES_USER='${{ secrets.POSTGRES_USER }}' \
               -e POSTGRES_DB='${{ secrets.POSTGRES_DB }}' \
               -p ${{ secrets.POSTGRES_PORT }}:5432 \
-              -v /opt/postgresql/data:/var/lib/postgresql/data \
+              -v /opt/postgresql/data:/var/lib/postgresql/data:rshared \
               postgres:18
           else
             echo "        - Container already running"

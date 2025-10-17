@@ -149,7 +149,8 @@ jobs:
           run_sudo() { echo "$PASSWORD" | sudo -S "$@"; }
 
           echo "      · Ensure data dir exists: \$HOME/postgresql/data"
-          mkdir -p "$HOME/postgresql/data"
+          run_sudo mkdir -p /opt/postgresql/data
+          run_sudo chown -R "$USER":"$USER" /opt/postgresql
 
           echo "      · Check if container 'postgresql' exists"
           if run_sudo docker ps -a --format '{{.Names}}' | grep -q '^postgresql$'; then
@@ -174,7 +175,7 @@ jobs:
               -e POSTGRES_USER='${{ secrets.POSTGRES_USER }}' \
               -e POSTGRES_DB='${{ secrets.POSTGRES_DB }}' \
               -p ${{ secrets.POSTGRES_PORT }}:5432 \
-              -v "$HOME/postgresql/data":/var/lib/postgresql/data \
+              -v /opt/postgresql/data:/var/lib/postgresql/data
               postgres:18
           else
             echo "        - Container already running"

@@ -27,7 +27,7 @@ jobs:
       - name: Check if PostgreSQL is already running
         id: check_postgres
         run: |
-          CHECK_RESULT=$(ssh -t -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} 'if command -v docker >/dev/null 2>&1; then if docker ps --filter "name=postgresql" --filter "status=running" --format "{{.Names}}" 2>/dev/null | grep -q "^postgresql$"; then echo "RUNNING"; else echo "NOT_RUNNING"; fi; else echo "DOCKER_NOT_INSTALLED"; fi' 2>/dev/null)
+          CHECK_RESULT=$(ssh -tt -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} 'if command -v docker >/dev/null 2>&1; then if docker ps --filter "name=postgresql" --filter "status=running" --format "{{.Names}}" 2>/dev/null | grep -q "^postgresql$"; then echo "RUNNING"; else echo "NOT_RUNNING"; fi; else echo "DOCKER_NOT_INSTALLED"; fi' 2>/dev/null)
 
           CHECK_RESULT=$(echo "$CHECK_RESULT" | xargs)
           echo "Check result: '$CHECK_RESULT'"
@@ -53,7 +53,7 @@ jobs:
       - name: Install Docker on server
         if: steps.check_postgres.outputs.postgres_running == 'false'
         run: |
-          ssh -t -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} bash -s << EOF
+          ssh -tt -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} bash -s << EOF
             export PASSWORD='${{ secrets.PASSWORD }}'
             
             # Check if Docker is already installed
@@ -93,7 +93,7 @@ jobs:
       - name: Setup PostgreSQL 18 container
         if: steps.check_postgres.outputs.postgres_running == 'false'
         run: |
-          ssh -t -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} bash -s << EOF
+          ssh -tt -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} bash -s << EOF
             # Create directory for PostgreSQL data
             mkdir -p ~/postgresql/data
             
@@ -124,7 +124,7 @@ jobs:
       - name: Verify installation
         if: steps.check_postgres.outputs.postgres_running == 'false'
         run: |
-          ssh -t -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} \
+          ssh -tt -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} \
             "docker exec postgresql psql -U ${{ secrets.POSTGRES_USER }} -c 'SELECT version();'" 2>/dev/null
 
       - name: Cleanup SSH key

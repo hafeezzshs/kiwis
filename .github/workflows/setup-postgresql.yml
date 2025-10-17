@@ -134,6 +134,7 @@ jobs:
           fi
 
           echo "    → [DONE] Remote: Ensure Docker is installed"
+          exit 0
           EOF
           echo "✅ [DONE] Step: Ensure Docker is installed"
 
@@ -210,6 +211,7 @@ jobs:
             echo "      · Running psql 'SELECT version();'"
             run_sudo docker exec postgresql psql -U '${{ secrets.POSTGRES_USER }}' -c 'SELECT version();'
             echo "    → [DONE] Remote: Verify PostgreSQL version"
+            exit 0
           else
             echo "❌   PostgreSQL container is not running"
             exit 1

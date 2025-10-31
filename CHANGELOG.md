@@ -10,3 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Paypulse-web and paypulse-api as git submodules (closes #2)
+
+### Added
+- Added `terms-and-conditions.md`: Official Terms & Conditions outlining user rights, permitted use, account management, security practices, and legal governance for PayPulse Pro.
+- Added `privacy-policy.md`: Official Privacy Policy detailing data collection, user control, privacy-first handling, session/token security, and compliance measures.

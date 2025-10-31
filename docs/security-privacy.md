@@ -3,7 +3,7 @@
 ## Privacy-First Design
 
 ### Email Content Protection
-- Raw emails never stored in PayPulse Pro systems
+- Raw emails never stored in Keyv.ai systems
 - Emails processed in-memory only by Context Engine
 - Only payment metadata extracted and stored
 - No access to email body content after processing

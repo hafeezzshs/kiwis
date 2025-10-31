@@ -1,8 +1,8 @@
-# PayPulse Pro Documentation
+# Keyv.ai Documentation
 
 ## Overview
 
-PayPulse Pro is an intelligent payment tracking system that securely extracts upcoming payment information from Gmail without storing or reading email content. The system uses a microservices architecture with Next.js frontend, Golang API, PostgreSQL database, Redis caching, background task workers, and an AI-powered context engine for payment classification and extraction.
+Keyv.ai is an intelligent payment tracking system that securely extracts upcoming payment information from Gmail without storing or reading email content. The system uses a microservices architecture with Next.js frontend, Golang API, PostgreSQL database, Redis caching, background task workers, and an AI-powered context engine for payment classification and extraction.
 
 ## Documentation Structure
 

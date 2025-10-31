@@ -1,19 +1,19 @@
-# **PayPulse Pro**
+# **Keyv.ai**
 
-The **PayPulse Pro** repository serves as the **deployment** and **public preview environment**, integrating both the **frontend** and **backend** components developed in their respective repositories.
+The **Keyv.ai** repository serves as the **deployment** and **public preview environment**, integrating both the **frontend** and **backend** components developed in their respective repositories.
 This setup enables unified deployment, version alignment, and consistent preview access for testing or demonstration purposes.
 
 ## Integrated Repositories
 
 ### Web
 
-- Source: [paypulse-web](https://github.com/vishkashpvp/paypulse-web)
+- Source: [keyv-web](https://github.com/vishkashpvp/keyv-web)
 - Description:
   Contains all **UI components**, **client logic**, and **state management** responsible for rendering and handling user interactions.
 
-### API
+### Worker
 
-- Source: [paypulse-api](https://github.com/vipul43/paypulse-api)
+- Source: [keyv-worker](https://github.com/vipul43/keyv-worker)
 - Description:
   Handles **server-side logic**, **API endpoints**, and **database management** that power the core functionality of the application.
 

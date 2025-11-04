@@ -3,18 +3,18 @@
 **Effective Date:** [Insert Date]  
 **Last Updated:** [Insert Date]
 
-By using Keyv.ai, you agree to the following terms:
+By using Kiwis.club, you agree to the following terms:
 
 ## 1. Account & Access
-- Authenticate using Google OAuth 2.0 to access Keyv.ai.
+- Authenticate using Google OAuth 2.0 to access Kiwis.club.
 - Only authorized read-only Gmail permissions are requested.
 
 ## 2. Permitted Use
-- Use Keyv.ai only for lawful payment tracking and dashboard use.
+- Use Kiwis.club only for lawful payment tracking and dashboard use.
 - Do not misuse, disrupt, or attempt unauthorized access to any service or user account.
 
 ## 3. User Data
-- Only payment-related metadata is extracted and stored; Keyv.ai never stores email content or attachments.
+- Only payment-related metadata is extracted and stored; Kiwis.club never stores email content or attachments.
 - You may configure time ranges and preferences in the app.
 
 ## 4. Security & Privacy
@@ -26,10 +26,10 @@ By using Keyv.ai, you agree to the following terms:
 - Data deletion is immediate and permanent.
 
 ## 6. Service Changes
-- Keyv.ai may update features and terms. Continued use implies acceptance of changes.
+- Kiwis.club may update features and terms. Continued use implies acceptance of changes.
 
 ## 7. Limitation of Liability
-- Keyv.ai is not liable for indirect damages, loss of data, or payment errors.
+- Kiwis.club is not liable for indirect damages, loss of data, or payment errors.
 
 ## 8. Governing Law
 - These terms shall be governed by and construed in accordance with the laws of India, and any disputes arising shall be subject to the exclusive jurisdiction of the courts in Bengaluru, Karnataka, India.

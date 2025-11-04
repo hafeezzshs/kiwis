@@ -93,7 +93,7 @@ Asynchronous email processing system using Goroutines.
 
 ### Privacy-First Processing
 - Receives raw email data directly from Background Worker
-- No email content stored in Keyv.ai systems
+- No email content stored in Kiwis.club systems
 - Processes emails in-memory only
 - Extracts payment information only
 

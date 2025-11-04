@@ -1,6 +1,6 @@
-[submodule "keyv-web"]
-	path = keyv-web
-	url = https://github.com/vishkashpvp/keyv-web
-[submodule "keyv-worker"]
-	path = keyv-worker
-	url = https://github.com/vipul43/keyv-worker
+[submodule "kiwis-web"]
+	path = kiwis-web
+	url = https://github.com/vishkashpvp/kiwis-web
+[submodule "kiwis-worker"]
+	path = kiwis-worker
+	url = https://github.com/vipul43/kiwis-worker

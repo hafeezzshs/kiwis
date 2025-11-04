@@ -1,19 +1,19 @@
-# **Keyv.ai**
+# **Kiwis.club**
 
-The **Keyv.ai** repository serves as the **deployment** and **public preview environment**, integrating both the **frontend** and **backend** components developed in their respective repositories.
+The **Kiwis.club** repository serves as the **deployment** and **public preview environment**, integrating both the **frontend** and **backend** components developed in their respective repositories.
 This setup enables unified deployment, version alignment, and consistent preview access for testing or demonstration purposes.
 
 ## Integrated Repositories
 
 ### Web
 
-- Source: [keyv-web](https://github.com/vishkashpvp/keyv-web)
+- Source: [kiwis-web](https://github.com/vishkashpvp/kiwis-web)
 - Description:
   Contains all **UI components**, **client logic**, and **state management** responsible for rendering and handling user interactions.
 
 ### Worker
 
-- Source: [keyv-worker](https://github.com/vipul43/keyv-worker)
+- Source: [kiwis-worker](https://github.com/vipul43/kiwis-worker)
 - Description:
   Handles **server-side logic**, **API endpoints**, and **database management** that power the core functionality of the application.
 

@@ -31,4 +31,4 @@
 - Any updates will be communicated within the app/dashboard
 
 ## 8. Contact
-- For privacy concerns: team.keyvai@gmail.com
+- For privacy concerns: team.kiwisclub@gmail.com

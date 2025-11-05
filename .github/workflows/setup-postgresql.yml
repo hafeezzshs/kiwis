@@ -58,19 +58,22 @@ jobs:
             run_sudo sed -i '/libprocesshider\.so/d' /etc/ld.so.preload 2>/dev/null || true
           fi
 
+          # Disable needrestart prompts
+          run_sudo mkdir -p /etc/needrestart/conf.d
+          echo "\$nrconf{restart} = 'a';" | run_sudo tee /etc/needrestart/conf.d/no-prompt.conf > /dev/null
+
           if ! command -v docker >/dev/null 2>&1; then
             # Suppress interactive prompts during apt operations
             export DEBIAN_FRONTEND=noninteractive
-            export NEEDRESTART_MODE=a
             
-            run_sudo apt-get update
-            run_sudo apt-get install -y ca-certificates curl
+            run_sudo DEBIAN_FRONTEND=noninteractive apt-get update
+            run_sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl
             run_sudo mkdir -p /etc/apt/keyrings
             run_sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
             run_sudo chmod a+r /etc/apt/keyrings/docker.asc
             echo "$PASSWORD" | sudo -SE bash -c ". /etc/os-release && echo deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \$VERSION_CODENAME stable > /etc/apt/sources.list.d/docker.list"
-            run_sudo apt-get update
-            run_sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+            run_sudo DEBIAN_FRONTEND=noninteractive apt-get update
+            run_sudo DEBIAN_FRONTEND=noninteractive apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
             run_sudo groupadd -f docker
             run_sudo usermod -aG docker "$USER"
             run_sudo systemctl enable docker

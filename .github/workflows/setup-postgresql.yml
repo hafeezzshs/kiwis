@@ -43,11 +43,12 @@ jobs:
             echo "postgres_running=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Exit early if PostgreSQL already running
+      - name: Skip if PostgreSQL already running
         if: steps.check_postgres.outputs.postgres_running == 'true'
-        run: exit 0
+        run: echo "PostgreSQL is already running. Skipping setup."
 
       - name: Ensure Docker is installed
+        if: steps.check_postgres.outputs.postgres_running == 'false'
         run: |
           ssh -tt -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} "export PASSWORD='${{ secrets.PASSWORD }}'; bash -s" << 'EOF'
           run_sudo() { echo "$PASSWORD" | sudo -S "$@"; }
@@ -69,6 +70,7 @@ jobs:
           EOF
 
       - name: Provision PostgreSQL container
+        if: steps.check_postgres.outputs.postgres_running == 'false'
         run: |
           ssh -tt -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} "export PASSWORD='${{ secrets.PASSWORD }}'; bash -s" << 'EOF'
           run_sudo() { echo "$PASSWORD" | sudo -S "$@"; }
@@ -88,9 +90,21 @@ jobs:
             -p ${{ secrets.POSTGRES_PORT }}:5432 \
             -v pgdata:/var/lib/postgresql/data \
             postgres:18
+
+          # Wait for PostgreSQL to be ready
+          echo "Waiting for PostgreSQL to be ready..."
+          for i in {1..30}; do
+            if run_sudo docker exec postgresql pg_isready -U '${{ secrets.POSTGRES_USER }}' >/dev/null 2>&1; then
+              echo "PostgreSQL is ready!"
+              break
+            fi
+            echo "Waiting... ($i/30)"
+            sleep 2
+          done
           EOF
 
       - name: Verify PostgreSQL version
+        if: steps.check_postgres.outputs.postgres_running == 'false'
         run: |
           ssh -tt -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} "export PASSWORD='${{ secrets.PASSWORD }}'; bash -s" << 'EOF'
           run_sudo() { echo "$PASSWORD" | sudo -S "$@"; }

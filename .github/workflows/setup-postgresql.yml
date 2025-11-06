@@ -3,8 +3,6 @@ name: Setup PostgreSQL on Server
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -21,118 +19,6 @@ jobs:
           echo "${{ secrets.SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.IP }} >> ~/.ssh/known_hosts
-
-      - name: Check server state
-        id: check_postgres
-        run: |
-          CHECK_RESULT=$(ssh -tt -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} '
-            if command -v docker >/dev/null 2>&1; then
-              if docker ps --filter "name=postgresql" --filter "status=running" --format "{{.Names}}" | grep -q "^postgresql$"; then
-                echo RUNNING
-              else
-                echo NOT_RUNNING
-              fi
-            else
-              echo DOCKER_NOT_INSTALLED
-            fi
-          ' | tr -d '\r' | xargs || true)
-
-          if [ "$CHECK_RESULT" = "RUNNING" ]; then
-            echo "postgres_running=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "postgres_running=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Skip if PostgreSQL already running
-        if: steps.check_postgres.outputs.postgres_running == 'true'
-        run: echo "PostgreSQL is already running. Skipping setup."
-
-      - name: Ensure Docker is installed
-        if: steps.check_postgres.outputs.postgres_running == 'false'
-        run: |
-          ssh -tt -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} "export PASSWORD='${{ secrets.PASSWORD }}'; bash -s" << 'EOF'
-          run_sudo() { echo "$PASSWORD" | sudo -S "$@"; }
-
-          # Fix corrupted ld.so.preload if it exists
-          if [ -f /etc/ld.so.preload ]; then
-            run_sudo sed -i '/libprocesshider\.so/d' /etc/ld.so.preload 2>/dev/null || true
-          fi
-
-          # Disable needrestart prompts
-          run_sudo mkdir -p /etc/needrestart/conf.d
-          echo "\$nrconf{restart} = 'a';" | run_sudo tee /etc/needrestart/conf.d/no-prompt.conf > /dev/null
-
-          if ! command -v docker >/dev/null 2>&1; then
-            # Suppress interactive prompts during apt operations
-            export DEBIAN_FRONTEND=noninteractive
-            
-            run_sudo DEBIAN_FRONTEND=noninteractive apt-get update
-            run_sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl
-            run_sudo mkdir -p /etc/apt/keyrings
-            run_sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-            run_sudo chmod a+r /etc/apt/keyrings/docker.asc
-            echo "$PASSWORD" | sudo -SE bash -c ". /etc/os-release && echo deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \$VERSION_CODENAME stable > /etc/apt/sources.list.d/docker.list"
-            run_sudo DEBIAN_FRONTEND=noninteractive apt-get update
-            run_sudo DEBIAN_FRONTEND=noninteractive apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-            run_sudo groupadd -f docker
-            run_sudo usermod -aG docker "$USER"
-            run_sudo systemctl enable docker
-            run_sudo systemctl start docker
-          else
-            # Docker is installed but may not be running, try to start it
-            if ! run_sudo systemctl is-active --quiet docker; then
-              run_sudo systemctl start docker || {
-                echo "Docker failed to start, attempting to fix..."
-                run_sudo systemctl reset-failed docker
-                run_sudo systemctl start docker
-              }
-            fi
-          fi
-          EOF
-
-      - name: Provision PostgreSQL container
-        if: steps.check_postgres.outputs.postgres_running == 'false'
-        run: |
-          ssh -tt -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} "export PASSWORD='${{ secrets.PASSWORD }}'; bash -s" << 'EOF'
-          run_sudo() { echo "$PASSWORD" | sudo -S "$@"; }
-
-          if run_sudo docker ps -a --format '{{.Names}}' | grep -q '^postgresql$'; then
-            run_sudo docker rm -f postgresql || true
-          fi
-
-          run_sudo docker volume create pgdata || true
-
-          run_sudo docker run -d \
-            --name postgresql \
-            --restart unless-stopped \
-            -e POSTGRES_PASSWORD='${{ secrets.POSTGRES_PASSWORD }}' \
-            -e POSTGRES_USER='${{ secrets.POSTGRES_USER }}' \
-            -e POSTGRES_DB='${{ secrets.POSTGRES_DB }}' \
-            -p ${{ secrets.POSTGRES_PORT }}:5432 \
-            -v pgdata:/var/lib/postgresql/data \
-            postgres:18
-
-          # Wait for PostgreSQL to be ready
-          echo "Waiting for PostgreSQL to be ready..."
-          for i in {1..30}; do
-            if run_sudo docker exec postgresql pg_isready -U '${{ secrets.POSTGRES_USER }}' >/dev/null 2>&1; then
-              echo "PostgreSQL is ready!"
-              break
-            fi
-            echo "Waiting... ($i/30)"
-            sleep 2
-          done
-          EOF
-
-      - name: Verify PostgreSQL version
-        if: steps.check_postgres.outputs.postgres_running == 'false'
-        run: |
-          ssh -tt -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} "export PASSWORD='${{ secrets.PASSWORD }}'; bash -s" << 'EOF'
-          run_sudo() { echo "$PASSWORD" | sudo -S "$@"; }
-          if run_sudo docker ps --format '{{.Names}}' | grep -q '^postgresql$'; then
-            run_sudo docker exec postgresql psql -U '${{ secrets.POSTGRES_USER }}' -c 'SELECT version();'
-          fi
-          EOF
 
       - name: Cleanup SSH key
         if: always()

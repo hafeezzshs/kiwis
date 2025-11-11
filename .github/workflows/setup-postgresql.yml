@@ -38,6 +38,21 @@ jobs:
             exit $EXIT_CODE
           fi
 
+      - name: Check Docker installation
+        id: check_docker
+        run: |
+          echo "Checking if Docker is installed on remote server..."
+          DOCKER_STATUS=$(ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} 'if command -v docker >/dev/null 2>&1; then echo "INSTALLED"; else echo "NOT_INSTALLED"; fi')
+          echo "Docker installation status: $DOCKER_STATUS"
+
+          if [ "$DOCKER_STATUS" = "INSTALLED" ]; then
+            echo "docker_installed=true" >> $GITHUB_OUTPUT
+            echo "✓ Docker is already installed on the server"
+          else
+            echo "docker_installed=false" >> $GITHUB_OUTPUT
+            echo "✗ Docker is not installed on the server"
+          fi
+
       - name: Cleanup SSH key
         if: always()
         run: rm -f ~/.ssh/deploy_key

@@ -47,29 +47,21 @@ jobs:
           SSH_EXIT_CODE=$?
           set -e
 
-          # Extract the status from output (remove any terminal control characters)
           DOCKER_STATUS=$(echo "$OUTPUT" | tr -d '\r' | grep -E "^(INSTALLED|NOT_INSTALLED)$" | head -n1)
-
-          echo "Raw output: $OUTPUT"
           echo "Docker installation status: $DOCKER_STATUS"
-          echo "SSH exit code: $SSH_EXIT_CODE"
 
           if [ $SSH_EXIT_CODE -ne 0 ]; then
-            echo "❌ Error: Failed to check Docker installation (SSH command failed with exit code $SSH_EXIT_CODE)"
+            echo "❌ SSH command failed with exit code $SSH_EXIT_CODE"
             echo "docker_installed=error" >> $GITHUB_OUTPUT
             exit 1
           elif [ "$DOCKER_STATUS" = "INSTALLED" ]; then
             echo "docker_installed=true" >> $GITHUB_OUTPUT
-            echo "✓ Docker is already installed on the server"
+            echo "✓ Docker is already installed"
           elif [ "$DOCKER_STATUS" = "NOT_INSTALLED" ]; then
             echo "docker_installed=false" >> $GITHUB_OUTPUT
-            echo "✗ Docker is not installed on the server"
-          elif [ -z "$DOCKER_STATUS" ]; then
-            echo "❌ Error: Empty Docker status response (possible SSH output issue)"
-            echo "docker_installed=error" >> $GITHUB_OUTPUT
-            exit 1
+            echo "✗ Docker is not installed"
           else
-            echo "❌ Error: Unexpected Docker status response: '$DOCKER_STATUS'"
+            echo "❌ Unexpected response: '$DOCKER_STATUS'"
             echo "docker_installed=error" >> $GITHUB_OUTPUT
             exit 1
           fi

@@ -43,11 +43,16 @@ jobs:
         run: |
           echo "Checking if Docker is installed on remote server..."
           set +e
-          DOCKER_STATUS=$(ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} 'if command -v docker >/dev/null 2>&1; then echo "INSTALLED"; else echo "NOT_INSTALLED"; fi' 2>&1)
+          OUTPUT=$(ssh -tt -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} 'if command -v docker >/dev/null 2>&1; then echo "INSTALLED"; else echo "NOT_INSTALLED"; fi' 2>&1)
           SSH_EXIT_CODE=$?
           set -e
 
+          # Extract the status from output (remove any terminal control characters)
+          DOCKER_STATUS=$(echo "$OUTPUT" | tr -d '\r' | grep -E "^(INSTALLED|NOT_INSTALLED)$" | head -n1)
+
+          echo "Raw output: $OUTPUT"
           echo "Docker installation status: $DOCKER_STATUS"
+          echo "SSH exit code: $SSH_EXIT_CODE"
 
           if [ $SSH_EXIT_CODE -ne 0 ]; then
             echo "❌ Error: Failed to check Docker installation (SSH command failed with exit code $SSH_EXIT_CODE)"
@@ -59,6 +64,10 @@ jobs:
           elif [ "$DOCKER_STATUS" = "NOT_INSTALLED" ]; then
             echo "docker_installed=false" >> $GITHUB_OUTPUT
             echo "✗ Docker is not installed on the server"
+          elif [ -z "$DOCKER_STATUS" ]; then
+            echo "❌ Error: Empty Docker status response (possible SSH output issue)"
+            echo "docker_installed=error" >> $GITHUB_OUTPUT
+            exit 1
           else
             echo "❌ Error: Unexpected Docker status response: '$DOCKER_STATUS'"
             echo "docker_installed=error" >> $GITHUB_OUTPUT

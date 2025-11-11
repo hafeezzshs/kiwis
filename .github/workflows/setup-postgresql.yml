@@ -42,15 +42,27 @@ jobs:
         id: check_docker
         run: |
           echo "Checking if Docker is installed on remote server..."
-          DOCKER_STATUS=$(ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} 'if command -v docker >/dev/null 2>&1; then echo "INSTALLED"; else echo "NOT_INSTALLED"; fi')
+          set +e
+          DOCKER_STATUS=$(ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} 'if command -v docker >/dev/null 2>&1; then echo "INSTALLED"; else echo "NOT_INSTALLED"; fi' 2>&1)
+          SSH_EXIT_CODE=$?
+          set -e
+
           echo "Docker installation status: $DOCKER_STATUS"
 
-          if [ "$DOCKER_STATUS" = "INSTALLED" ]; then
+          if [ $SSH_EXIT_CODE -ne 0 ]; then
+            echo "❌ Error: Failed to check Docker installation (SSH command failed with exit code $SSH_EXIT_CODE)"
+            echo "docker_installed=error" >> $GITHUB_OUTPUT
+            exit 1
+          elif [ "$DOCKER_STATUS" = "INSTALLED" ]; then
             echo "docker_installed=true" >> $GITHUB_OUTPUT
             echo "✓ Docker is already installed on the server"
-          else
+          elif [ "$DOCKER_STATUS" = "NOT_INSTALLED" ]; then
             echo "docker_installed=false" >> $GITHUB_OUTPUT
             echo "✗ Docker is not installed on the server"
+          else
+            echo "❌ Error: Unexpected Docker status response: '$DOCKER_STATUS'"
+            echo "docker_installed=error" >> $GITHUB_OUTPUT
+            exit 1
           fi
 
       - name: Cleanup SSH key

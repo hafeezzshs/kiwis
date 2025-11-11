@@ -2,9 +2,9 @@ name: Setup PostgreSQL on Server
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -25,9 +25,18 @@ jobs:
       - name: Test SSH connection
         run: |
           echo "Testing SSH connection to server..."
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} 'echo "SSH connection successful"' 2>&1 | tee /tmp/ssh_output.log
-          echo "Command output logged above"
-          echo "SSH connection test completed"
+          set +e
+          OUTPUT=$(ssh -tt -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} 'echo "SSH connection successful"; exit 0' 2>&1)
+          EXIT_CODE=$?
+          set -e
+          echo "Command output: $OUTPUT"
+          echo "Exit code: $EXIT_CODE"
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "SSH connection test completed successfully"
+          else
+            echo "SSH connection test failed with exit code $EXIT_CODE"
+            exit $EXIT_CODE
+          fi
 
       - name: Cleanup SSH key
         if: always()

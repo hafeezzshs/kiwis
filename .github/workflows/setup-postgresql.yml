@@ -82,10 +82,10 @@ jobs:
           export DEBIAN_FRONTEND=noninteractive
 
           echo "Updating package index..."
-          run_sudo apt-get update -qq
+          run_sudo apt-get update
 
           echo "Installing prerequisites..."
-          run_sudo apt-get install -y -qq ca-certificates curl
+          run_sudo apt-get install -y ca-certificates curl
 
           echo "Creating directory for Docker GPG key..."
           run_sudo install -m 0755 -d /etc/apt/keyrings
@@ -101,10 +101,10 @@ jobs:
             run_sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
           echo "Updating package index with Docker repository..."
-          run_sudo apt-get update -qq
+          run_sudo apt-get update
 
           echo "Installing Docker CE packages..."
-          run_sudo apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+          run_sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
           echo "Adding user to docker group..."
           run_sudo usermod -aG docker ${{ secrets.USER }}

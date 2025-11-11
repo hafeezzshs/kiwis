@@ -25,8 +25,8 @@ jobs:
       - name: Test SSH connection
         run: |
           echo "Testing SSH connection to server..."
-          OUTPUT=$(ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} 'echo "SSH connection successful"')
-          echo "Command output: $OUTPUT"
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} 'echo "SSH connection successful"' 2>&1 | tee /tmp/ssh_output.log
+          echo "Command output logged above"
           echo "SSH connection test completed"
 
       - name: Cleanup SSH key

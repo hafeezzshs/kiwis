@@ -66,56 +66,57 @@ jobs:
             exit 1
           fi
 
-      - name: Install Docker
+      - name: Create Docker installation script
         if: steps.check_docker.outputs.docker_installed == 'false'
         run: |
-          echo "Installing Docker on remote server..."
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} << 'EOF'
+          cat > /tmp/install_docker.sh << 'SCRIPT'
+          #!/bin/bash
           set -e
 
-          # Helper function for sudo commands with better error handling
+          PASSWORD="$1"
+          USER="$2"
+
           run_sudo() {
-            echo "${{ secrets.PASSWORD }}" | sudo -S "$@"
+            echo "$PASSWORD" | sudo -S "$@" 2>&1
           }
 
-          # Set non-interactive mode to suppress prompts
           export DEBIAN_FRONTEND=noninteractive
 
-          echo "Updating package index..."
-          run_sudo apt-get update
+          echo "==> Updating package index..."
+          run_sudo apt-get update 2>&1 | tail -5
 
-          echo "Installing prerequisites..."
-          run_sudo apt-get install -y ca-certificates curl
+          echo "==> Installing prerequisites..."
+          run_sudo apt-get install -y ca-certificates curl 2>&1 | tail -5
 
-          echo "Creating directory for Docker GPG key..."
+          echo "==> Creating directory for Docker GPG key..."
           run_sudo install -m 0755 -d /etc/apt/keyrings
 
-          echo "Adding Docker GPG key..."
+          echo "==> Adding Docker GPG key..."
           run_sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
           run_sudo chmod a+r /etc/apt/keyrings/docker.asc
 
-          echo "Adding Docker repository..."
+          echo "==> Adding Docker repository..."
           echo \
             "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
             $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
             run_sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-          echo "Updating package index with Docker repository..."
-          run_sudo apt-get update
+          echo "==> Updating package index with Docker repository..."
+          run_sudo apt-get update 2>&1 | tail -5
 
-          echo "Installing Docker CE packages..."
-          run_sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+          echo "==> Installing Docker CE packages..."
+          run_sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin 2>&1 | tail -10
 
-          echo "Adding user to docker group..."
-          run_sudo usermod -aG docker ${{ secrets.USER }}
+          echo "==> Adding user to docker group..."
+          run_sudo usermod -aG docker "$USER"
 
-          echo "Enabling Docker service..."
-          run_sudo systemctl enable docker
+          echo "==> Enabling Docker service..."
+          run_sudo systemctl enable docker 2>&1 | grep -v "password"
 
-          echo "Starting Docker service..."
+          echo "==> Starting Docker service..."
           run_sudo systemctl start docker
 
-          echo "Verifying Docker installation..."
+          echo "==> Verifying Docker installation..."
           if command -v docker >/dev/null 2>&1; then
             echo "✓ Docker installation completed successfully"
             docker --version
@@ -123,7 +124,18 @@ jobs:
             echo "❌ Docker installation failed - docker command not found"
             exit 1
           fi
-          EOF
+          SCRIPT
+          chmod +x /tmp/install_docker.sh
+
+      - name: Upload and execute Docker installation script
+        if: steps.check_docker.outputs.docker_installed == 'false'
+        run: |
+          echo "Uploading installation script to server..."
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no /tmp/install_docker.sh ${{ secrets.USER }}@${{ secrets.IP }}:/tmp/
+
+          echo "Executing installation script on server..."
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} \
+            "bash /tmp/install_docker.sh '${{ secrets.PASSWORD }}' '${{ secrets.USER }}' && rm /tmp/install_docker.sh"
 
       - name: Cleanup SSH key
         if: always()

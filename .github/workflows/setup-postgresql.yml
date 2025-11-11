@@ -73,19 +73,19 @@ jobs:
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.IP }} << 'EOF'
           set -e
 
-          # Helper function for sudo commands
+          # Helper function for sudo commands with better error handling
           run_sudo() {
-            echo "${{ secrets.PASSWORD }}" | sudo -S "$@" 2>&1 | grep -v "\[sudo\] password"
+            echo "${{ secrets.PASSWORD }}" | sudo -S "$@"
           }
 
           # Set non-interactive mode to suppress prompts
           export DEBIAN_FRONTEND=noninteractive
 
           echo "Updating package index..."
-          run_sudo apt-get update
+          run_sudo apt-get update -qq
 
           echo "Installing prerequisites..."
-          run_sudo apt-get install -y ca-certificates curl
+          run_sudo apt-get install -y -qq ca-certificates curl
 
           echo "Creating directory for Docker GPG key..."
           run_sudo install -m 0755 -d /etc/apt/keyrings
@@ -101,10 +101,10 @@ jobs:
             run_sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
           echo "Updating package index with Docker repository..."
-          run_sudo apt-get update
+          run_sudo apt-get update -qq
 
           echo "Installing Docker CE packages..."
-          run_sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+          run_sudo apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
           echo "Adding user to docker group..."
           run_sudo usermod -aG docker ${{ secrets.USER }}
@@ -115,7 +115,14 @@ jobs:
           echo "Starting Docker service..."
           run_sudo systemctl start docker
 
-          echo "✓ Docker installation completed successfully"
+          echo "Verifying Docker installation..."
+          if command -v docker >/dev/null 2>&1; then
+            echo "✓ Docker installation completed successfully"
+            docker --version
+          else
+            echo "❌ Docker installation failed - docker command not found"
+            exit 1
+          fi
           EOF
 
       - name: Cleanup SSH key

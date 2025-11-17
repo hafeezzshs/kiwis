@@ -9,7 +9,7 @@ on:
 
 jobs:
   setup-postgresql:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - name: Checkout code

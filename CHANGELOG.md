@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to this project will bee documented in this file.
+All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -8,5 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added `kiwis-web` and `kiwis-worker` as git submodules
 
-- Paypulse-web and paypulse-api as git submodules (closes #2)
+### Changed
+- Rebranded project to **Kiwis**
+- Updated all references to use `kiwis.club` as the official domain
+- Renamed submodule references from legacy names to `kiwis-*`
+
+### Removed
+- Removed legacy PayPulse / Keyv branding and references
+- Removed local privacy policy and terms files (now maintained centrally)

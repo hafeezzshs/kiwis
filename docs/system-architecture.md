@@ -2,7 +2,7 @@
 
 ## Overview
 
-PayPulse Pro is an intelligent payment tracking system that securely extracts upcoming payment information from Gmail without storing or reading email content. The system uses a microservices architecture with Next.js frontend, Golang API, PostgreSQL database, Redis caching, background task workers, and an AI-powered context engine for payment classification and extraction.
+Kiwis.club is an intelligent payment tracking system that securely extracts upcoming payment information from Gmail without storing or reading email content. The system uses a microservices architecture with Next.js frontend, Golang API, PostgreSQL database, Redis caching, background task workers, and an AI-powered context engine for payment classification and extraction.
 
 ## High-Level Architecture
 
@@ -125,7 +125,7 @@ Cache and session store for performance optimization.
 ## Key Design Principles
 
 ### Privacy-First
-- Emails never stored in PayPulse Pro systems
+- Emails never stored in Kiwis.club systems
 - In-memory processing only
 - Minimal Gmail permissions (read-only)
 - User data deletion on request

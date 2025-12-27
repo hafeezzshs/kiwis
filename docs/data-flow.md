@@ -3,7 +3,7 @@
 ## Initial User Onboarding Flow
 
 ### 1. Landing Page
-- User visits PayPulse Pro
+- User visits Kiwis.club
 - Clicks "Sign In with Google"
 
 ### 2. OAuth Flow

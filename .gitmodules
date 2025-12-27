@@ -1,6 +1,6 @@
-[submodule "paypulse-web"]
-	path = paypulse-web
-	url = https://github.com/vishkashpvp/paypulse-web
-[submodule "paypulse-api"]
-	path = paypulse-api
-	url = https://github.com/vipul43/paypulse-api
+[submodule "kiwis-web"]
+	path = kiwis-web
+	url = https://github.com/vishkashpvp/kiwis-web
+[submodule "kiwis-worker"]
+	path = kiwis-worker
+	url = https://github.com/vipul43/kiwis-worker

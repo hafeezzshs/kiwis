@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Added `kiwis-web` and `kiwis-worker` as git submodules
+- Dockerized `kiwis-web` and `kiwis-worker` with production-ready, Makefile-driven multi-stage Docker builds
 
 ### Changed
 - Rebranded project to **Kiwis**
